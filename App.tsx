@@ -108,8 +108,8 @@ const App: React.FC = () => {
               </div>
               <p className="text-xl max-w-lg font-medium" style={{ color: 'var(--text-secondary)' }}>
                 {status === AnalysisStatus.FETCHING_GITHUB 
-                  ? 'Gathering repository data and structure' 
-                  : 'Evaluating code quality, functionality, and architecture'}
+                  ? 'Reading repository files and code content...' 
+                  : 'Analyzing actual code implementation, quality, and architecture...'}
               </p>
               <div className="flex items-center justify-center gap-3 pt-6">
                 <div className="w-2 h-2 rounded-full animate-pulse" style={{ backgroundColor: 'var(--accent)' }}></div>

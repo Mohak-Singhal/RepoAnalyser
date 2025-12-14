@@ -279,6 +279,8 @@ const AnalysisDashboard: React.FC<AnalysisDashboardProps> = ({ repoData, analysi
               <StatCard icon={GitBranch} label="Branches" value={repoData.branches.length} />
               <StatCard icon={TestTube} label="Tests" value={repoData.testFiles.length} />
               <StatCard icon={Code2} label="CI/CD" value={repoData.hasCICD ? 'Yes' : 'No'} />
+              <StatCard icon={Code2} label="Code Files Analyzed" value={repoData.filesAnalyzed || repoData.codeFiles?.length || 0} />
+              <StatCard icon={FileText} label="Code Size" value={`${((repoData.totalCodeSize || 0) / 1024).toFixed(1)} KB`} />
             </div>
             <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
               <div className="flex items-center justify-between">

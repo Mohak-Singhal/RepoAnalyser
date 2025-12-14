@@ -24,6 +24,17 @@ export interface TestFileInfo {
   type: 'unit' | 'integration' | 'e2e' | 'unknown';
 }
 
+export interface CodeFile {
+  path: string;
+  content: string;
+  size: number;
+  language?: string;
+  isTest: boolean;
+  isConfig: boolean;
+  isDocumentation: boolean;
+  priority: 'high' | 'medium' | 'low'; // Priority for analysis
+}
+
 export interface RepoMetadata {
   owner: string;
   name: string;
@@ -49,6 +60,11 @@ export interface RepoMetadata {
   hasContributing: boolean;
   hasCodeOfConduct: boolean;
   defaultBranch: string;
+  // Actual code files
+  codeFiles: CodeFile[];
+  totalCodeSize: number;
+  filesAnalyzed: number;
+  filesSkipped: number;
 }
 
 export interface RoadmapStep {

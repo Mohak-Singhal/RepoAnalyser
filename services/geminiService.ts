@@ -32,26 +32,71 @@ export const analyzeRepository = async (repoData: RepoMetadata): Promise<Analysi
                      /(express|fastapi|django|flask|spring|nest)/i.test(structureStr);
   const hasDatabase = /(database|db|models|schema|migrations|prisma|typeorm|sequelize)/i.test(structureStr);
 
-  // Detect AI usage patterns
+  // Detect AI usage patterns from code and README
   const readmeLower = (repoData.readmeContent || '').toLowerCase();
   const structureLower = structureStr;
+  const codeContent = repoData.codeFiles.map(f => f.content).join('\n').toLowerCase();
   const aiIndicators = [
-    /openai|anthropic|claude|gpt|gemini|ai model|llm|langchain|llama/i.test(readmeLower + structureLower),
-    /(ai|artificial intelligence|machine learning|ml|neural)/i.test(readmeLower),
-    /(prompt|embedding|vector|rag|fine.?tun)/i.test(readmeLower + structureLower),
-    /(tensorflow|pytorch|keras|transformers|huggingface)/i.test(structureLower)
+    /openai|anthropic|claude|gpt|gemini|ai model|llm|langchain|llama/i.test(readmeLower + structureLower + codeContent),
+    /(ai|artificial intelligence|machine learning|ml|neural)/i.test(readmeLower + codeContent),
+    /(prompt|embedding|vector|rag|fine.?tun)/i.test(readmeLower + structureLower + codeContent),
+    /(tensorflow|pytorch|keras|transformers|huggingface)/i.test(structureLower + codeContent)
   ];
   const aiUsageDetected = aiIndicators.some(indicator => indicator);
 
+  // Prepare code content for analysis - prioritize high priority files
+  const highPriorityFiles = repoData.codeFiles.filter(f => f.priority === 'high').slice(0, 50);
+  const mediumPriorityFiles = repoData.codeFiles.filter(f => f.priority === 'medium').slice(0, 30);
+  const configFiles = repoData.codeFiles.filter(f => f.isConfig).slice(0, 20);
+  const testFiles = repoData.codeFiles.filter(f => f.isTest).slice(0, 20);
+  
+  // Combine and limit total code size (max ~200KB of code)
+  const selectedFiles = [...highPriorityFiles, ...mediumPriorityFiles, ...configFiles, ...testFiles];
+  const uniqueFiles = Array.from(new Map(selectedFiles.map(f => [f.path, f])).values());
+  
+  // Format code files for prompt
+  const formatCodeFiles = (files: typeof repoData.codeFiles, maxChars: number = 150000) => {
+    let totalChars = 0;
+    const formatted: string[] = [];
+    
+    for (const file of files) {
+      if (totalChars >= maxChars) break;
+      
+      const fileContent = file.content.length > 2000 
+        ? file.content.substring(0, 2000) + '\n... [truncated]'
+        : file.content;
+      
+      const fileSection = `
+--- FILE: ${file.path} (${file.language || 'Unknown'}, ${file.size} bytes, Priority: ${file.priority}) ---
+${fileContent}
+`;
+      
+      if (totalChars + fileSection.length > maxChars) break;
+      formatted.push(fileSection);
+      totalChars += fileSection.length;
+    }
+    
+    return formatted.join('\n');
+  };
+  
+  const codeContentForAnalysis = formatCodeFiles(uniqueFiles, 150000);
+
   const prompt = `
-You are a Senior Software Engineer with 10+ years of experience reviewing code at top tech companies. Your task is to analyze this GitHub repository as if you were conducting a technical interview or code review for a senior engineering role.
+You are a Senior Software Engineer with 10+ years of experience reviewing code at top tech companies. Your task is to analyze this GitHub repository by examining the ACTUAL CODE CONTENT, not just file names or README.
+
+CRITICAL: You have access to REAL CODE FILES from this repository. Your analysis MUST be based on:
+1. Actual code implementation and quality
+2. Code patterns, architecture, and design decisions visible in the code
+3. Code organization and structure as seen in the files
+4. Real functionality and completeness based on code analysis
+5. Code quality, best practices, and maintainability from actual code review
 
 Evaluate this repository from the perspective of:
-- Clear thinking and logical problem-solving
-- Smart breakdown of complex problems
-- Creativity and engineering judgment
-- Ability to design solutions that feel industry-ready
-- Professional code quality and maintainability
+- Clear thinking and logical problem-solving (visible in code)
+- Smart breakdown of complex problems (architecture in code)
+- Creativity and engineering judgment (implementation patterns)
+- Ability to design solutions that feel industry-ready (code quality)
+- Professional code quality and maintainability (actual code review)
 
 === REPOSITORY INFORMATION ===
 
@@ -87,6 +132,22 @@ Documentation:
 README Content (Full):
 ${repoData.readmeContent ? repoData.readmeContent.substring(0, 8000) : "NO README FOUND - This is a MAJOR red flag indicating incomplete project."}
 
+=== ACTUAL CODE FILES ANALYZED ===
+This is the CRITICAL section - you are analyzing REAL CODE, not just file names!
+
+Code Files Analyzed: ${repoData.filesAnalyzed} files (${repoData.filesSkipped} skipped due to size limits)
+Total Code Size: ${(repoData.totalCodeSize / 1024).toFixed(2)} KB
+High Priority Files: ${highPriorityFiles.length}
+Medium Priority Files: ${mediumPriorityFiles.length}
+Config Files: ${configFiles.length}
+Test Files: ${testFiles.length}
+
+IMPORTANT: The following is ACTUAL CODE CONTENT from the repository. Analyze the code quality, patterns, architecture, and implementation details:
+
+${codeContentForAnalysis}
+
+${repoData.codeFiles.length > uniqueFiles.length ? `\nNote: ${repoData.codeFiles.length - uniqueFiles.length} additional files were analyzed but not shown in detail due to size limits.` : ''}
+
 Testing:
 - Test Files Found: ${testInfo.count}
 - Test Types: ${testInfo.types.join(', ') || 'None'}
@@ -114,12 +175,13 @@ Commit Quality:
 
 Evaluate these critical aspects with HIGH ACCURACY. Scores must be consistent with working status:
 
-1. CODE QUALITY & READABILITY
-   - Code cleanliness, readability, maintainability
-   - Naming conventions and consistency
-   - Separation of concerns
-   - Code organization and structure
-   - Presence of code smells or anti-patterns
+1. CODE QUALITY & READABILITY (ANALYZE ACTUAL CODE)
+   - Code cleanliness, readability, maintainability (from actual code files)
+   - Naming conventions and consistency (visible in code)
+   - Separation of concerns (architecture in code)
+   - Code organization and structure (file structure and code patterns)
+   - Presence of code smells or anti-patterns (found in actual code)
+   - Code complexity and maintainability (based on real code review)
 
 2. PROJECT STRUCTURE & ORGANIZATION
    - Logical and scalable structure
@@ -153,13 +215,14 @@ Evaluate these critical aspects with HIGH ACCURACY. Scores must be consistent wi
    - Git workflow
    - Code review evidence
 
-7. FUNCTIONALITY & COMPLETENESS (CRITICAL FOR ACCURACY)
-   - Does the project actually WORK?
-   - Is it complete or incomplete?
-   - Are core features implemented?
-   - Can it be used as intended?
+7. FUNCTIONALITY & COMPLETENESS (CRITICAL FOR ACCURACY - BASED ON ACTUAL CODE)
+   - Does the project actually WORK? (Analyze code for working implementations)
+   - Is it complete or incomplete? (Check if core features have actual code implementations)
+   - Are core features implemented? (Verify code exists for claimed features)
+   - Can it be used as intended? (Check for main entry points, API endpoints, etc. in code)
    - IMPORTANT: If "Partially Working" or "Not Working", completeness score MUST be low (not 90%!)
-   - Completeness score should reflect actual completion status
+   - Completeness score should reflect actual completion status based on CODE ANALYSIS
+   - Look for TODO comments, incomplete functions, placeholder code, error handling
 
 8. ARCHITECTURE
    - Architecture patterns used
