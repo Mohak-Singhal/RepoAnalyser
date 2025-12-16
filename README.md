@@ -1,10 +1,16 @@
 
-# RepoAnalyzer - Comprehensive Repository Analysis
+# RepoAnalyzer - Get the Real Score of Any GitHub Project
 
-#Live Demo ([View Demo](https://repo-analyser-nine.vercel.app))
+* **📺 Watch Video Demo:** [https://youtu.be/qPmNon0FGA8](https://youtu.be/qPmNon0FGA8)
+* **▶️ Use Live App:** [https://repo-analyser-nine.vercel.app](https://repo-analyser-nine.vercel.app)
+
+![RepoAnalyzer](https://github.com/user-attachments/assets/cedf3c20-fcce-4f0b-9a25-be92e62a0119)
 
 **RepoAnalyzer** is a comprehensive GitHub repository analysis tool that performs deep analysis of architecture, functionality, optimization, completeness, and working status. It determines if your project actually works and provides detailed insights into code quality, AI usage, frontend-backend connectivity, and more.
 
+![RepoAnalyzer](https://github.com/user-attachments/assets/5e6a94c8-e429-4d7d-b998-ab6a068de0c4)
+
+![RepoAnalyzer](https://github.com/user-attachments/assets/d25c7ecc-1319-4b42-9359-842c7a4c16b6)
 ## 🎯 Core Features
 
 - **Comprehensive Repository Analysis**: Automatically analyzes code quality, project structure, documentation, test coverage, commit history, and Git best practices
@@ -58,7 +64,7 @@
 ## 📖 How to Use
 
 1. **Enter a GitHub Repository URL**
-   - Paste any public GitHub repository URL (e.g., `https://github.com/username/repo`)
+   - Paste any public GitHub repository URL (e.g., `https://github.com/Mohak-Singhal/RepoAnalyser`)
    - Click "Analyze Repo"
 
 2. **Wait for Analysis**
@@ -172,14 +178,3 @@ Each analysis includes:
 - [ ] Integration with GitHub Actions
 - [ ] Custom evaluation criteria
 
-## 📄 License
-
-This project is open source and available under the MIT License.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
----
-
-**Built with ❤️ using React, TypeScript, and Google Gemini AI**
